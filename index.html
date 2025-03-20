@@ -40,6 +40,14 @@
       border-radius: 50%;
       z-index: 1;
     }
+    .star {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: yellow;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      z-index: 3;
+    }
     #word {
       position: absolute;
       bottom: 10px;
@@ -49,31 +57,37 @@
       color: #fff;
       text-shadow: 2px 2px 4px #000;
     }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+    }
   </style>
 </head>
 <body>
   <div id="game">
     <div id="mermaid"></div>
     <div id="word"></div>
+    <div id="score">Score: 0</div>
   </div>
 
   <script>
     const game = document.getElementById('game');
     const mermaid = document.getElementById('mermaid');
     const wordDisplay = document.getElementById('word');
+    const scoreDisplay = document.getElementById('score');
     let word = '';
     let letters = [];
+    let frogs = [];
     let wordList = [];
+    let score = 0;
 
-    // Load word list
-    fetch('http://dreamsteep.com/projects/the-english-open-word-list.html')
-      .then(response => response.text())
-      .then(data => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data, 'text/html');
-        const words = doc.querySelector('pre').innerText.split('\n');
-        wordList = words.map(w => w.trim().toLowerCase());
-      });
+    // Load word list (using a placeholder list for now)
+    wordList = ['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape'];
+    wordList = wordList.filter(w => w.length > 1); // Ignore one-letter words
 
     // Mermaid position
     let mermaidX = window.innerWidth / 2;
@@ -109,20 +123,25 @@
       letter.style.left = `${x}px`;
       letter.style.top = `${y}px`;
       game.appendChild(letter);
-      letters.push({ element: letter, x, y });
 
       // Move letter downward
       const interval = setInterval(() => {
-        y += 2;
-        letter.style.top = `${y}px`;
-        if (y > window.innerHeight) {
+        const currentY = parseFloat(letter.style.top);
+        if (currentY > window.innerHeight) {
           clearInterval(interval);
           game.removeChild(letter);
           letters = letters.filter(l => l.element !== letter);
+        } else {
+          letter.style.top = `${currentY + 2}px`;
         }
 
         // Check collision with mermaid
-        if (y >= mermaidY && y <= mermaidY + 50 && x >= mermaidX && x <= mermaidX + 50) {
+        if (
+          currentY >= mermaidY &&
+          currentY <= mermaidY + 50 &&
+          x >= mermaidX &&
+          x <= mermaidX + 50
+        ) {
           word += letter.innerText.toLowerCase();
           wordDisplay.innerText = word;
           game.removeChild(letter);
@@ -144,15 +163,22 @@
 
       // Move frog downward
       const interval = setInterval(() => {
-        y += 2;
-        frog.style.top = `${y}px`;
-        if (y > window.innerHeight) {
+        const currentY = parseFloat(frog.style.top);
+        if (currentY > window.innerHeight) {
           clearInterval(interval);
           game.removeChild(frog);
+          frogs = frogs.filter(f => f.element !== frog);
+        } else {
+          frog.style.top = `${currentY + 2}px`;
         }
 
         // Check collision with mermaid
-        if (y >= mermaidY && y <= mermaidY + 50 && x >= mermaidX && x <= mermaidX + 50) {
+        if (
+          currentY >= mermaidY &&
+          currentY <= mermaidY + 50 &&
+          x >= mermaidX &&
+          x <= mermaidX + 50
+        ) {
           word = '';
           wordDisplay.innerText = '';
           game.removeChild(frog);
@@ -164,10 +190,48 @@
     // Check if word is valid
     function checkWord() {
       if (wordList.includes(word)) {
-        alert(`You found a word: ${word}!`);
-        word = '';
-        wordDisplay.innerText = '';
+        celebrateWord();
       }
+    }
+
+    // Celebrate successful word
+    function celebrateWord() {
+      // Create stars for each letter
+      const stars = [];
+      for (let i = 0; i < word.length; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = `${window.innerWidth / 2 + (i - word.length / 2) * 30}px`;
+        star.style.top = `${window.innerHeight - 100}px`;
+        game.appendChild(star);
+        stars.push(star);
+      }
+
+      // Animate stars exploding and flying to the top-left corner
+      stars.forEach((star, index) => {
+        setTimeout(() => {
+          const targetX = 10;
+          const targetY = 10 + index * 10;
+          const duration = 1000;
+
+          star.animate(
+            [
+              { transform: 'scale(1)', opacity: 1 },
+              { transform: 'scale(2)', opacity: 0.5, offset: 0.5 },
+              { transform: `translate(${targetX}px, ${targetY}px) scale(0.5)`, opacity: 0 }
+            ],
+            { duration, easing: 'ease-out' }
+          ).onfinish = () => {
+            game.removeChild(star);
+            score++;
+            scoreDisplay.innerText = `Score: ${score}`;
+          };
+        }, index * 100);
+      });
+
+      // Reset word
+      word = '';
+      wordDisplay.innerText = '';
     }
 
     // Generate letters every 2 seconds
