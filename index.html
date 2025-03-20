@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mermaid Word Game!</title>
+  <title>Mermaid Word Game</title>
   <style>
     body {
       margin: 0;
@@ -30,6 +30,14 @@
       font-weight: bold;
       color: #fff;
       text-shadow: 1px 1px 2px #000;
+      z-index: 1;
+    }
+    .frog {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: green;
+      border-radius: 50%;
       z-index: 1;
     }
     #word {
@@ -124,6 +132,35 @@
       }, 20);
     }
 
+    // Generate frog
+    function generateFrog() {
+      const frog = document.createElement('div');
+      frog.className = 'frog';
+      const x = Math.random() * (window.innerWidth - 40);
+      const y = -40;
+      frog.style.left = `${x}px`;
+      frog.style.top = `${y}px`;
+      game.appendChild(frog);
+
+      // Move frog downward
+      const interval = setInterval(() => {
+        y += 2;
+        frog.style.top = `${y}px`;
+        if (y > window.innerHeight) {
+          clearInterval(interval);
+          game.removeChild(frog);
+        }
+
+        // Check collision with mermaid
+        if (y >= mermaidY && y <= mermaidY + 50 && x >= mermaidX && x <= mermaidX + 50) {
+          word = '';
+          wordDisplay.innerText = '';
+          game.removeChild(frog);
+          clearInterval(interval);
+        }
+      }, 20);
+    }
+
     // Check if word is valid
     function checkWord() {
       if (wordList.includes(word)) {
@@ -135,6 +172,9 @@
 
     // Generate letters every 2 seconds
     setInterval(generateLetter, 2000);
+
+    // Generate frog every 5 seconds
+    setInterval(generateFrog, 5000);
   </script>
 </body>
 </html>
