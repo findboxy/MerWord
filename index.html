@@ -24,12 +24,19 @@
       background-size: cover;
       z-index: 2;
     }
-    .letter {
+    .letter-tile {
       position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       font-size: 24px;
       font-weight: bold;
-      color: #fff;
-      text-shadow: 1px 1px 2px #000;
+      color: #000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       z-index: 1;
     }
     .frog {
@@ -40,22 +47,46 @@
       border-radius: 50%;
       z-index: 1;
     }
-    .star {
+    .ripple {
       position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: yellow;
-      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-      z-index: 3;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid rgba(173, 216, 230, 0.8);
+      animation: ripple-effect 1s ease-out;
+      z-index: 0;
+    }
+    @keyframes ripple-effect {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
     }
     #word {
       position: absolute;
       bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 32px;
-      color: #fff;
-      text-shadow: 2px 2px 4px #000;
+      display: flex;
+      gap: 5px;
+      z-index: 3;
+    }
+    .word-tile {
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     #score {
       position: absolute;
@@ -115,40 +146,67 @@
 
     // Generate random letters
     function generateLetter() {
-      const letter = document.createElement('div');
-      letter.className = 'letter';
-      letter.innerText = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      const letterTile = document.createElement('div');
+      letterTile.className = 'letter-tile';
+      const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      letterTile.innerText = letter;
       const x = Math.random() * (window.innerWidth - 50);
       const y = -50;
-      letter.style.left = `${x}px`;
-      letter.style.top = `${y}px`;
-      game.appendChild(letter);
+      letterTile.style.left = `${x}px`;
+      letterTile.style.top = `${y}px`;
+      game.appendChild(letterTile);
+
+      // Track whether the letter has been collected
+      let collected = false;
 
       // Move letter downward
       const interval = setInterval(() => {
-        const currentY = parseFloat(letter.style.top);
+        const currentY = parseFloat(letterTile.style.top);
         if (currentY > window.innerHeight) {
           clearInterval(interval);
-          game.removeChild(letter);
-          letters = letters.filter(l => l.element !== letter);
+          game.removeChild(letterTile);
+          letters = letters.filter(l => l.element !== letterTile);
         } else {
-          letter.style.top = `${currentY + 2}px`;
+          letterTile.style.top = `${currentY + 2}px`;
         }
 
         // Check collision with mermaid
         if (
+          !collected &&
           currentY >= mermaidY &&
           currentY <= mermaidY + 50 &&
           x >= mermaidX &&
           x <= mermaidX + 50
         ) {
-          word += letter.innerText.toLowerCase();
-          wordDisplay.innerText = word;
-          game.removeChild(letter);
-          letters = letters.filter(l => l.element !== letter);
+          word += letter.toLowerCase();
+          wordDisplay.appendChild(createWordTile(letter));
+          collected = true; // Mark the letter as collected
+
+          // Add ripple effect
+          const ripple = document.createElement('div');
+          ripple.className = 'ripple';
+          ripple.style.left = `${x - 10}px`;
+          ripple.style.top = `${currentY - 10}px`;
+          game.appendChild(ripple);
+          setTimeout(() => game.removeChild(ripple), 1000);
+
+          // Remove the letter tile after a short delay
+          setTimeout(() => {
+            game.removeChild(letterTile);
+            letters = letters.filter(l => l.element !== letterTile);
+          }, 100);
+
           checkWord();
         }
       }, 20);
+    }
+
+    // Create a word tile for the bottom display
+    function createWordTile(letter) {
+      const tile = document.createElement('div');
+      tile.className = 'word-tile';
+      tile.innerText = letter;
+      return tile;
     }
 
     // Generate frog
@@ -180,7 +238,7 @@
           x <= mermaidX + 50
         ) {
           word = '';
-          wordDisplay.innerText = '';
+          wordDisplay.innerHTML = '';
           game.removeChild(frog);
           clearInterval(interval);
         }
@@ -231,7 +289,7 @@
 
       // Reset word
       word = '';
-      wordDisplay.innerText = '';
+      wordDisplay.innerHTML = '';
     }
 
     // Generate letters every 2 seconds
