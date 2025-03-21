@@ -113,12 +113,55 @@
     let word = '';
     let letters = [];
     let frogs = [];
-    let wordList = [];
+    let threeLetterWords = [];
+    let fourLetterWords = [];
     let score = 0;
 
-    // Load word list (using a placeholder list for now)
-    wordList = ['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape'];
-    wordList = wordList.filter(w => w.length > 1); // Ignore one-letter words
+    // Load word lists from JSON files
+    async function loadWordLists() {
+      const response3 = await fetch('3-letter-words.json');
+      threeLetterWords = await response3.json();
+      const response4 = await fetch('4-letter-words.json');
+      fourLetterWords = await response4.json();
+      console.log('3-letter words:', threeLetterWords);
+      console.log('4-letter words:', fourLetterWords);
+    }
+
+    // Letter frequency distribution
+    const letterDistribution = [
+      ...Array(12).fill('E'),
+      ...Array(9).fill('A'),
+      ...Array(9).fill('I'),
+      ...Array(8).fill('O'),
+      ...Array(6).fill('N'),
+      ...Array(6).fill('R'),
+      ...Array(6).fill('T'),
+      ...Array(4).fill('L'),
+      ...Array(4).fill('S'),
+      ...Array(4).fill('U'),
+      ...Array(4).fill('D'),
+      ...Array(3).fill('G'),
+      ...Array(3).fill('B'),
+      ...Array(2).fill('C'),
+      ...Array(3).fill('M'),
+      ...Array(2).fill('P'),
+      ...Array(2).fill('F'),
+      ...Array(2).fill('H'),
+      ...Array(2).fill('V'),
+      ...Array(2).fill('W'),
+      ...Array(2).fill('Y'),
+      ...Array(1).fill('K'),
+      ...Array(1).fill('J'),
+      ...Array(1).fill('X'),
+      ...Array(1).fill('Q'),
+      ...Array(1).fill('Z')
+    ];
+
+    // Generate a random letter based on the distribution
+    function getRandomLetter() {
+      const randomIndex = Math.floor(Math.random() * letterDistribution.length);
+      return letterDistribution[randomIndex];
+    }
 
     // Mermaid position
     let mermaidX = window.innerWidth / 2;
@@ -148,7 +191,7 @@
     function generateLetter() {
       const letterTile = document.createElement('div');
       letterTile.className = 'letter-tile';
-      const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      const letter = getRandomLetter();
       letterTile.innerText = letter;
       const x = Math.random() * (window.innerWidth - 50);
       const y = -50;
@@ -247,7 +290,12 @@
 
     // Check if word is valid
     function checkWord() {
-      if (wordList.includes(word)) {
+      console.log('Current word:', word); // Debugging
+      if (word.length === 3 && threeLetterWords.includes(word)) {
+        console.log('Valid 3-letter word found:', word); // Debugging
+        celebrateWord();
+      } else if (word.length === 4 && fourLetterWords.includes(word)) {
+        console.log('Valid 4-letter word found:', word); // Debugging
         celebrateWord();
       }
     }
@@ -292,11 +340,16 @@
       wordDisplay.innerHTML = '';
     }
 
-    // Generate letters every 2 seconds
-    setInterval(generateLetter, 2000);
+    // Initialize the game
+    async function init() {
+      await loadWordLists();
+      // Generate letters every 2 seconds
+      setInterval(generateLetter, 2000);
+      // Generate frog every 5 seconds
+      setInterval(generateFrog, 5000);
+    }
 
-    // Generate frog every 5 seconds
-    setInterval(generateFrog, 5000);
+    init();
   </script>
 </body>
 </html>
