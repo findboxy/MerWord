@@ -9,7 +9,7 @@
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+      background: #b5daeb;
     }
     #game {
       position: relative;
@@ -18,9 +18,15 @@
     }
     #mermaid {
       position: absolute;
+<<<<<<< Updated upstream
       width: 90px;
       height: 90px;
       background-image: url("https://i.giphy.com/fwQ9iqyPxuhCyOMyhR.webp");
+=======
+      width: 50px;
+      height: 50px;
+      background-image:url ("Turtle1.gif");
+>>>>>>> Stashed changes
       background-size: cover;
       z-index: 2;
     }
@@ -188,6 +194,16 @@
       touchX = e.touches[0].clientX;
       touchY = e.touches[0].clientY;
     });
+	  
+	  // Mouse control for the mermaid
+        document.addEventListener('mousemove', (e) => {
+            if (!gameLoopRunning) return; // Ignore input if the game is not running
+
+            mermaidX = e.clientX - mermaid.offsetWidth / 2;
+            mermaidY = window.innerHeight - e.clientY - mermaid.offsetHeight / 2; // Invert Y-axis for mouse control
+            mermaid.style.left = `${mermaidX}px`;
+            mermaid.style.bottom = `${mermaidY}px`;
+        });
 
     // Generate random letters
     function generateLetter() {
