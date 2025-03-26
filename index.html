@@ -9,7 +9,7 @@
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
-      background: #b5daeb;
+      background: linear-gradient(to bottom, #87CEEB, #1E90FF);
     }
     #game {
       position: relative;
@@ -18,21 +18,9 @@
     }
     #mermaid {
       position: absolute;
-<<<<<<< Updated upstream
-      width: 90px;
-      height: 90px;
-      background-image: url("https://i.giphy.com/fwQ9iqyPxuhCyOMyhR.webp");
-=======
-      width: 50px;
-      height: 50px;
-      background-image:url ("Turtle1.gif");
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+      width: 80px;
+      height: 80px;
+      background-image: src("Turtle1.gif");
       background-size: cover;
       z-index: 2;
     }
@@ -54,8 +42,8 @@
     .frog {
       position: absolute;
       width: 80px;
-      height: 80px;
-      background-image: url("https://classroomclipart.com/images/gallery/Animations/Animals/animation-of-frog-moving-big-eyes-crca-sm.gif");
+      height: 70px;
+      background-color: url("https://classroomclipart.com/images/gallery/Animations/Animals/animation-of-frog-moving-big-eyes-crca-sm.gif");
       border-radius: 50%;
       z-index: 1;
     }
@@ -101,7 +89,6 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     #score {
-      visibility: hidden;
       position: absolute;
       top: 10px;
       left: 10px;
@@ -126,12 +113,55 @@
     let word = '';
     let letters = [];
     let frogs = [];
-    let wordList = [];
+    let threeLetterWords = [];
+    let fourLetterWords = [];
     let score = 0;
 
-    // Load word list (using a placeholder list for now)
-    wordList = ['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape'];
-    wordList = wordList.filter(w => w.length > 1); // Ignore one-letter words
+    // Load word lists from JSON files
+    async function loadWordLists() {
+      const response3 = await fetch('3-letter-words.json');
+      threeLetterWords = await response3.json();
+      const response4 = await fetch('4-letter-words.json');
+      fourLetterWords = await response4.json();
+      console.log('3-letter words:', threeLetterWords);
+      console.log('4-letter words:', fourLetterWords);
+    }
+
+    // Letter frequency distribution
+    const letterDistribution = [
+      ...Array(12).fill('E'),
+      ...Array(9).fill('A'),
+      ...Array(9).fill('I'),
+      ...Array(8).fill('O'),
+      ...Array(6).fill('N'),
+      ...Array(6).fill('R'),
+      ...Array(6).fill('T'),
+      ...Array(4).fill('L'),
+      ...Array(4).fill('S'),
+      ...Array(4).fill('U'),
+      ...Array(4).fill('D'),
+      ...Array(3).fill('G'),
+      ...Array(3).fill('B'),
+      ...Array(2).fill('C'),
+      ...Array(3).fill('M'),
+      ...Array(2).fill('P'),
+      ...Array(2).fill('F'),
+      ...Array(2).fill('H'),
+      ...Array(2).fill('V'),
+      ...Array(2).fill('W'),
+      ...Array(2).fill('Y'),
+      ...Array(1).fill('K'),
+      ...Array(1).fill('J'),
+      ...Array(1).fill('X'),
+      ...Array(1).fill('Q'),
+      ...Array(1).fill('Z')
+    ];
+
+    // Generate a random letter based on the distribution
+    function getRandomLetter() {
+      const randomIndex = Math.floor(Math.random() * letterDistribution.length);
+      return letterDistribution[randomIndex];
+    }
 
     // Mermaid position
     let mermaidX = window.innerWidth / 2;
@@ -141,37 +171,64 @@
 
     // Touch controls
     let touchX = 0, touchY = 0;
+    let isDragging = false;
+
     game.addEventListener('touchstart', (e) => {
+      e.preventDefault();
       touchX = e.touches[0].clientX;
       touchY = e.touches[0].clientY;
+      isDragging = true;
     });
+
     game.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      const deltaX = e.touches[0].clientX - touchX;
-      const deltaY = e.touches[0].clientY - touchY;
-      mermaidX = Math.max(0, Math.min(window.innerWidth - 50, mermaidX + deltaX));
-      mermaidY = Math.max(0, Math.min(window.innerHeight - 50, mermaidY + deltaY));
-      mermaid.style.left = `${mermaidX}px`;
-      mermaid.style.top = `${mermaidY}px`;
-      touchX = e.touches[0].clientX;
-      touchY = e.touches[0].clientY;
+      if (isDragging) {
+        const deltaX = e.touches[0].clientX - touchX;
+        const deltaY = e.touches[0].clientY - touchY;
+        mermaidX = Math.max(0, Math.min(window.innerWidth - 50, mermaidX + deltaX));
+        mermaidY = Math.max(0, Math.min(window.innerHeight - 50, mermaidY + deltaY));
+        mermaid.style.left = `${mermaidX}px`;
+        mermaid.style.top = `${mermaidY}px`;
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+      }
     });
-	  
-	  // Mouse control for the mermaid
-        document.addEventListener('mousemove', (e) => {
-            if (!gameLoopRunning) return; // Ignore input if the game is not running
 
-            mermaidX = e.clientX - mermaid.offsetWidth / 2;
-            mermaidY = window.innerHeight - e.clientY - mermaid.offsetHeight / 2; // Invert Y-axis for mouse control
-            mermaid.style.left = `${mermaidX}px`;
-            mermaid.style.bottom = `${mermaidY}px`;
-        });
+    game.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Mouse controls
+    game.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      touchX = e.clientX;
+      touchY = e.clientY;
+    });
+
+    game.addEventListener('mousemove', (e) => {
+      e.preventDefault();
+      if (isDragging) {
+        const deltaX = e.clientX - touchX;
+        const deltaY = e.clientY - touchY;
+        mermaidX = Math.max(0, Math.min(window.innerWidth - 50, mermaidX + deltaX));
+        mermaidY = Math.max(0, Math.min(window.innerHeight - 50, mermaidY + deltaY));
+        mermaid.style.left = `${mermaidX}px`;
+        mermaid.style.top = `${mermaidY}px`;
+        touchX = e.clientX;
+        touchY = e.clientY;
+      }
+    });
+
+    game.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
 
     // Generate random letters
     function generateLetter() {
       const letterTile = document.createElement('div');
       letterTile.className = 'letter-tile';
-      const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      const letter = getRandomLetter();
       letterTile.innerText = letter;
       const x = Math.random() * (window.innerWidth - 50);
       const y = -50;
@@ -270,7 +327,12 @@
 
     // Check if word is valid
     function checkWord() {
-      if (wordList.includes(word)) {
+      console.log('Current word:', word); // Debugging
+      if (word.length === 3 && threeLetterWords.includes(word)) {
+        console.log('Valid 3-letter word found:', word); // Debugging
+        celebrateWord();
+      } else if (word.length === 4 && fourLetterWords.includes(word)) {
+        console.log('Valid 4-letter word found:', word); // Debugging
         celebrateWord();
       }
     }
@@ -315,11 +377,16 @@
       wordDisplay.innerHTML = '';
     }
 
-    // Generate letters every 2 seconds
-    setInterval(generateLetter, 2000);
+    // Initialize the game
+    async function init() {
+      await loadWordLists();
+      // Generate letters every 2 seconds
+      setInterval(generateLetter, 2000);
+      // Generate frog every 5 seconds
+      setInterval(generateFrog, 5000);
+    }
 
-    // Generate frog every 5 seconds
-    setInterval(generateFrog, 5000);
+    init();
   </script>
 </body>
 </html>
